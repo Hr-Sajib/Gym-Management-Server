@@ -1,50 +1,25 @@
-// prisma/schema.prisma
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL") // Neon connection string
+  url      = env("DATABASE_URL")
 }
 
 model User {
-  id        String   @id @default(uuid()) // Use UUID for scalability
+  id        String   @id @default(uuid())
   name      String
   email     String   @unique
   password  String
   role      Role
-  phone     String?  // Optional field per requirements
+  phone     String?  // optional
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  trainerSchedules ClassSchedule[] @relation("TrainerSchedules")
-  traineeBookings  Booking[]      @relation("TraineeBookings")
 }
 
 enum Role {
   ADMIN
   TRAINER
   TRAINEE
-}
-
-model ClassSchedule {
-  id        String   @id @default(uuid())
-  trainerId String
-  trainer   User     @relation("TrainerSchedules", fields: [trainerId], references: [id])
-  startTime DateTime
-  endTime   DateTime
-  date      DateTime
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  bookings  Booking[] @relation("ScheduleBookings")
-}
-
-model Booking {
-  id         String        @id @default(uuid())
-  traineeId  String
-  scheduleId String
-  trainee    User          @relation("TraineeBookings", fields: [traineeId], references: [id])
-  schedule   ClassSchedule @relation("ScheduleBookings", fields: [scheduleId], references: [id])
-  createdAt  DateTime      @default(now())
-  updatedAt  DateTime      @updatedAt
 }
