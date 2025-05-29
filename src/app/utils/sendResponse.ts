@@ -24,10 +24,6 @@ const sendResponse = <T>(res: Response, data: TResponse<T>, PaymentGatewayPageUR
     data: data.data,
   };
 
-  if (PaymentGatewayPageURL) {
-    responsePayload.PaymentGatewayPageURL = PaymentGatewayPageURL;
-  }
-
   res.status(data.statusCode).json(responsePayload);
 };
 

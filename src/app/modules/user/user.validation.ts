@@ -15,7 +15,7 @@ export const createUserZodSchema = z.object({
         required_error: 'Password is required',
       })
       .min(6, 'Password must be at least 6 characters'),
-    role: z.enum(['admin', 'trainer', 'trainee'], {
+    role: z.enum(['ADMIN', 'TRAINER', 'TRAINEE'], {
       required_error: 'User role is required',
     }),
   }),

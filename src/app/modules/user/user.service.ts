@@ -1,88 +1,85 @@
-import AppError from "../../errors/AppError";
-import { TUser } from "./user.interface";
-import { UserModel } from "./user.model";
-import bcrypt from "bcrypt"; // Make sure bcrypt is installed
+import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcrypt"; 
+import { IUser } from "./user.interface";
 
-const createUserIntoDB = async(payload: TUser) => {
-  const newUser = await UserModel.create(payload); 
-  if(!newUser){
-    throw new AppError(400,"User not registerd! Error occured! ")
-  }
+const prisma = new PrismaClient();
+
+const createUserIntoDB = async (payload: IUser) => {
+  const hashedPassword = await bcrypt.hash(payload.password, 10);
+  const newUser = await prisma.user.create({
+    data: {
+      name: payload.name,
+      email: payload.email,
+      password: hashedPassword,
+      role: payload.role,
+      phone: payload.phone,
+    },
+  });
+
   return newUser;
-}
-
-
-
-const updateUserPassword = async (
-  userEmail: string,
-  oldPassword: string,
-  newPassword: string
-) => {
-  const user = await UserModel.findOne({ email: userEmail }).select("+password");
-  if (!user) {
-    throw new AppError(404, "User not found");
-  }
-
-  // Verify password
-  const isOldPasswordCorrect = await bcrypt.compare(oldPassword, user.password);
-
-  if (!isOldPasswordCorrect) {
-    throw new AppError(401, "Old password is incorrect");
-  }
-
-  user.password = newPassword;
-  user.passwordChangedAt = new Date();
-
-  await user.save();
-
-  return { message: "Password updated successfully" };
 };
 
-
 const getAllUsersFromDB = async () => {
-  const users = await UserModel.find().select("-password"); // Exclude password field
-  if (!users || users.length === 0) {
-    throw new AppError(404, "No users found!");
-  }
+  const users = await prisma.user.findMany({
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      phone: true,
+      // exclude password for security
+    },
+  });
   return users;
 };
 
-
-
-
-const getMeFromDB = async (email: string) => {
-  const user = await UserModel.findOne({ email }).select('-password');
-  
-  if (!user) {
-    throw new AppError(404, "User not found!");
-  }
-
+const getUserByIdFromDB = async (id: string) => {
+  const user = await prisma.user.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      phone: true,
+      // exclude password
+    },
+  });
   return user;
 };
 
+const updateUserInDB = async (id: string, updates: Partial<IUser>) => {
+  // We don't allow updating password here; separate function for that
+  const updatedUser = await prisma.user.update({
+    where: { id },
+    data: {
+      name: updates.name,
+      email: updates.email,
+      phone: updates.phone,
+      role: updates.role,
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      phone: true,
+    },
+  });
+  return updatedUser;
+};
 
-// New service function to update user data (name, email)
-const updateUserData = async (userEmail: string, updates: Partial<TUser>) => {
-  const user = await UserModel.findOne({ email: userEmail });
-  if (!user) {
-    throw new AppError(404, "User not found");
-  }
-
-  // Update only the provided fields (name, email)
-  if (updates.name) user.name = updates.name;
-  if (updates.email) user.email = updates.email;
-  if (updates.phone) user.phone = updates.phone;
-  if (updates.address) user.address = updates.address;
-
-
-  await user.save();
-  return user;
+const deleteUserFromDB = async (id: string) => {
+  await prisma.user.delete({
+    where: { id },
+  });
+  return;
 };
 
 export const userServices = {
   createUserIntoDB,
-  updateUserPassword,
-  getMeFromDB,
-  updateUserData,
-  getAllUsersFromDB
-}
+  getAllUsersFromDB,
+  getUserByIdFromDB,
+  updateUserInDB,
+  deleteUserFromDB,
+};

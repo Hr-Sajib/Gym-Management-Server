@@ -1,4 +1,5 @@
-export type UserRole = 'admin' | 'trainer' | 'trainee';
+// src/modules/user/interfaces/user.interface.ts
+export type UserRole = 'ADMIN' | 'TRAINER' | 'TRAINEE';
 
 export interface IUser {
   id: string;
@@ -6,6 +7,7 @@ export interface IUser {
   email: string;
   password: string;
   role: UserRole;
-  createdAt?: Date;
-  updatedAt?: Date;
+  phone?: string; // Optional field
+  createdAt: Date; // Non-optional, managed by Prisma
+  updatedAt: Date; // Non-optional, managed by Prisma
 }
