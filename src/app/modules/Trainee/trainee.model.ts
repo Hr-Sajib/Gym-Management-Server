@@ -2,13 +2,10 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import { ITrainee } from './trainee.interface';
 
+
 // Define the Mongoose schema for Trainee
 const traineeSchema = new Schema<ITrainee>(
   {
-    id: {
-      type: String,
-      default: () => new mongoose.Types.ObjectId().toString(),
-    },
     name: {
       type: String,
       required: true,
@@ -24,19 +21,31 @@ const traineeSchema = new Schema<ITrainee>(
     },
     phone: {
       type: String,
-      default: null, // Optional field, default to null to match the interface
+      default: null,
     },
     role: {
       type: String,
-      default: "TRAINEE", // Fixed default value
-      enum: ["TRAINEE"], // Enforce only "TRAINEE" as a valid value
+      default: 'TRAINEE',
+      enum: ['TRAINEE'],
+    },
+    enrolledClasses: {
+      type: [Schema.Types.ObjectId],
+      ref: 'Class',
+      default: [],
     },
   },
   {
-    timestamps: true, // Automatically manage createdAt and updatedAt fields
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
   }
 );
 
+// Virtual field for id (string representation of _id)
+// traineeSchema.virtual('id').get(function (this: Document) {
+//   return this._id.toString();
+// });
+
 // Create and export the Trainee model
-const Trainee = mongoose.model<ITrainee>('Trainee', traineeSchema); // Note: Should be ITrainee, not ITrainer
+const Trainee = mongoose.model<ITrainee>('Trainee', traineeSchema);
 export default Trainee;

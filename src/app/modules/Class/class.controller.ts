@@ -10,8 +10,8 @@ const createClass = catchAsync(async (req: Request, res: Response) => {
   const classData = req.body;
 
   // Restrict to ADMIN or TRAINER
-  if (!['ADMIN', 'TRAINER'].includes(req.user?.role as string)) {
-    throw new AppError(httpStatus.UNAUTHORIZED, 'Only admins or trainers can create classes!');
+  if (!['ADMIN'].includes(req.user?.role as string)) {
+    throw new AppError(httpStatus.UNAUTHORIZED, 'Only admins can create classes!');
   }
 
   const newClass = await classServices.createClassIntoDB(classData);
@@ -19,17 +19,7 @@ const createClass = catchAsync(async (req: Request, res: Response) => {
     statusCode: httpStatus.CREATED,
     success: true,
     message: 'Class created successfully',
-    data: {
-      id: newClass.id,
-      startTime: newClass.startTime,
-      endTime: newClass.endTime,
-      date: newClass.date,
-      assignedTrainerId: newClass.assignedTrainerId,
-      conductedOrNot: newClass.conductedOrNot, // Replaced conductedTrainerId
-      enrolledTraineeIds: newClass.enrolledTraineeIds,
-      createdAt: newClass.createdAt,
-      updatedAt: newClass.updatedAt,
-    },
+    data: newClass,
   });
 });
 

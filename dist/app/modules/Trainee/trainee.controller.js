@@ -26,14 +26,7 @@ const createTrainee = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, 
         statusCode: http_status_1.default.CREATED,
         success: true,
         message: 'Trainee created successfully',
-        data: {
-            id: newTrainee.id,
-            name: newTrainee.name,
-            email: newTrainee.email,
-            phone: newTrainee.phone,
-            createdAt: newTrainee.createdAt,
-            updatedAt: newTrainee.updatedAt,
-        },
+        data: newTrainee,
     });
 }));
 const getAllTrainees = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -71,34 +64,22 @@ const getTraineeById = (0, catchAsync_1.default)((req, res) => __awaiter(void 0,
 }));
 const updateTrainee = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
-    const { id } = req.params;
     const updates = req.body;
-    // Get the logged-in user's email and role
-    const loggedInUserEmail = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userEmail;
+    const loggedInUserEmail = ((_a = req.user) === null || _a === void 0 ? void 0 : _a.email) || '';
     const loggedInUserRole = (_b = req.user) === null || _b === void 0 ? void 0 : _b.role;
-    console.log("in cont: ", loggedInUserEmail, loggedInUserRole);
     // Restrict to TRAINEE or ADMIN
     if (loggedInUserRole !== 'TRAINEE' && loggedInUserRole !== 'ADMIN') {
         throw new AppError_1.default(http_status_1.default.UNAUTHORIZED, 'Only trainees or admins can update trainee info!');
-    }
-    // Fetch the target trainee
-    const targetTrainee = yield trainee_service_1.traineeServices.getTraineeByIdFromDB(id);
-    if (!targetTrainee) {
-        throw new AppError_1.default(http_status_1.default.NOT_FOUND, 'Trainee not found');
-    }
-    // Restrict non-admins from updating other users
-    if (loggedInUserRole !== 'ADMIN' && targetTrainee.email !== loggedInUserEmail) {
-        throw new AppError_1.default(http_status_1.default.UNAUTHORIZED, "You can't update another user's information!");
     }
     // Prevent role updates
     if (updates.role) {
         throw new AppError_1.default(http_status_1.default.BAD_REQUEST, 'Role cannot be updated!');
     }
-    const updatedTrainee = yield trainee_service_1.traineeServices.updateTraineeInDB(id, updates);
+    const updatedTrainee = yield trainee_service_1.traineeServices.updateTraineeInDB(loggedInUserEmail, updates);
     (0, sendResponse_1.default)(res, {
         statusCode: http_status_1.default.OK,
         success: true,
-        message: 'Trainee updated successfully',
+        message: 'Trainee updated successfully by himself',
         data: {
             id: updatedTrainee.id,
             name: updatedTrainee.name,

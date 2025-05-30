@@ -1,5 +1,4 @@
 "use strict";
-/* eslint-disable @typescript-eslint/no-explicit-any */
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -15,20 +14,23 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.trainerServices = void 0;
 // src/app/modules/Trainer/trainer.service.ts
-const client_1 = require("@prisma/client");
 const bcrypt_1 = __importDefault(require("bcrypt"));
-const AppError_1 = __importDefault(require("../../errors/AppError"));
 const http_status_1 = __importDefault(require("http-status"));
-const prisma = new client_1.PrismaClient();
+const AppError_1 = __importDefault(require("../../errors/AppError"));
+const trainer_model_1 = __importDefault(require("./trainer.model"));
+const class_model_1 = __importDefault(require("../Class/class.model"));
 const createTrainerIntoDB = (payload) => __awaiter(void 0, void 0, void 0, function* () {
     const hashedPassword = yield bcrypt_1.default.hash(payload.password, 10);
-    const newTrainer = yield prisma.trainer.create({
-        data: {
-            name: payload.name,
-            email: payload.email,
-            password: hashedPassword,
-        },
+    const newTrainer = yield trainer_model_1.default.create({
+        name: payload.name,
+        email: payload.email,
+        password: hashedPassword,
+        phone: payload.phone,
+        // role is handled by the schema default ("TRAINER")
     });
+    if (!newTrainer) {
+        throw new AppError_1.default(http_status_1.default.INTERNAL_SERVER_ERROR, 'Failed to create trainer');
+    }
     return {
         id: newTrainer.id,
         name: newTrainer.name,
@@ -37,29 +39,16 @@ const createTrainerIntoDB = (payload) => __awaiter(void 0, void 0, void 0, funct
         password: newTrainer.password, // Removed in controller response
         createdAt: newTrainer.createdAt,
         updatedAt: newTrainer.updatedAt,
-        assignedClasses: [], // Already string[]
-        conductedClasses: [], // Already string[]
+        assignedClasses: newTrainer.assignedClasses,
+        conductedClasses: newTrainer.conductedClasses,
     };
 });
 const getAllTrainersFromDB = () => __awaiter(void 0, void 0, void 0, function* () {
-    const trainers = yield prisma.trainer.findMany({
-        select: {
-            id: true,
-            name: true,
-            email: true,
-        },
-    });
+    const trainers = yield trainer_model_1.default.find({}, { id: 1, name: 1, email: 1, _id: 0 });
     return trainers;
 });
 const getTrainerByIdFromDB = (id) => __awaiter(void 0, void 0, void 0, function* () {
-    const trainer = yield prisma.trainer.findUnique({
-        where: { id },
-        select: {
-            id: true,
-            name: true,
-            email: true,
-        },
-    });
+    const trainer = yield trainer_model_1.default.findOne({ id }, { id: 1, name: 1, email: 1, _id: 0 });
     if (!trainer) {
         throw new AppError_1.default(http_status_1.default.NOT_FOUND, 'Trainer not found');
     }
@@ -70,72 +59,49 @@ const updateTrainerInDB = (id, updates) => __awaiter(void 0, void 0, void 0, fun
     if (updates.password) {
         hashedPassword = yield bcrypt_1.default.hash(updates.password, 10);
     }
-    const updatedTrainer = yield prisma.trainer.update({
-        where: { id },
-        data: {
-            name: updates.name,
-            email: updates.email,
-            password: hashedPassword,
-        },
-        select: {
-            id: true,
-            name: true,
-            email: true,
-        },
-    });
+    const updateData = {
+        name: updates.name,
+        email: updates.email,
+        phone: updates.phone,
+    };
+    if (hashedPassword) {
+        updateData.password = hashedPassword;
+    }
+    const updatedTrainer = yield trainer_model_1.default.findOneAndUpdate({ id }, { $set: updateData }, { new: true, runValidators: true, fields: { id: 1, name: 1, email: 1, _id: 0 } });
+    if (!updatedTrainer) {
+        throw new AppError_1.default(http_status_1.default.NOT_FOUND, 'Trainer not found');
+    }
     return updatedTrainer;
 });
 const deleteTrainerFromDB = (id) => __awaiter(void 0, void 0, void 0, function* () {
-    yield prisma.trainer.delete({
-        where: { id },
-    });
+    const result = yield trainer_model_1.default.deleteOne({ id });
+    if (result.deletedCount === 0) {
+        throw new AppError_1.default(http_status_1.default.NOT_FOUND, 'Trainer not found');
+    }
+    return;
 });
 const assignClassToTrainerInDB = (trainerId, classId) => __awaiter(void 0, void 0, void 0, function* () {
     // Check if trainer exists
-    const trainer = yield prisma.trainer.findUnique({
-        where: { id: trainerId },
-        include: {
-            assignedClasses: {
-                select: { id: true }, // Fetch only class IDs
-            },
-        },
-    });
+    const trainer = yield trainer_model_1.default.findOne({ id: trainerId }).select('id name email assignedClasses');
     if (!trainer) {
         throw new AppError_1.default(http_status_1.default.NOT_FOUND, 'Trainer not found');
     }
     // Check if class exists
-    const classData = yield prisma.class.findUnique({
-        where: { id: classId },
-    });
+    const classData = yield class_model_1.default.findOne({ id: classId });
     if (!classData) {
         throw new AppError_1.default(http_status_1.default.NOT_FOUND, 'Class not found');
     }
-    // Map assignedClasses to string array of IDs
-    const assignedClassIds = trainer.assignedClasses.map((cls) => cls.id);
     // Check if class is already assigned to the trainer
-    const isAssigned = assignedClassIds.includes(classId);
+    const isAssigned = trainer.assignedClasses.includes(classId);
     if (isAssigned) {
         throw new AppError_1.default(http_status_1.default.BAD_REQUEST, 'Class already assigned to trainer');
     }
-    // Assign class to trainer
-    const updatedTrainer = yield prisma.trainer.update({
-        where: { id: trainerId },
-        data: {
-            assignedClasses: {
-                connect: { id: classId }, // Use connect to link the class
-            },
-        },
-        select: {
-            id: true,
-            name: true,
-            email: true,
-            assignedClasses: {
-                select: { id: true }, // Return only class IDs
-            },
-        },
-    });
-    // Transform assignedClasses to string[] for response
-    return Object.assign(Object.assign({}, updatedTrainer), { assignedClasses: updatedTrainer.assignedClasses.map((cls) => cls.id) });
+    // Assign class to trainer by updating the assignedClasses array
+    const updatedTrainer = yield trainer_model_1.default.findOneAndUpdate({ id: trainerId }, { $push: { assignedClasses: classId } }, { new: true, runValidators: true, select: { id: 1, name: 1, email: 1, assignedClasses: 1, _id: 0 } });
+    if (!updatedTrainer) {
+        throw new AppError_1.default(http_status_1.default.INTERNAL_SERVER_ERROR, 'Failed to assign class to trainer');
+    }
+    return Object.assign(Object.assign({}, updatedTrainer.toObject()), { assignedClasses: updatedTrainer.assignedClasses });
 });
 exports.trainerServices = {
     createTrainerIntoDB,
@@ -143,5 +109,5 @@ exports.trainerServices = {
     getTrainerByIdFromDB,
     updateTrainerInDB,
     deleteTrainerFromDB,
-    assignClassToTrainerInDB
+    assignClassToTrainerInDB,
 };

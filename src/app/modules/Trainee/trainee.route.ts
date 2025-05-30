@@ -7,6 +7,7 @@ import {
   updateTraineeZodSchema,
 } from '../Trainee/trainee.validation';
 import { traineeController } from './trainee.controller';
+import auth from '../../middlewares/auth';
 
 const router = express.Router();
 
@@ -17,21 +18,21 @@ router.post(
   traineeController.createTrainee,
 );
 
-// // Get all trainees
-// router.get('/', auth('ADMIN'), traineeController.getAllTrainees);
+// Get all trainees
+router.get('/', auth('ADMIN'), traineeController.getAllTrainees);
 
-// // Get a single trainee by ID
-// router.get('/:id', auth('ADMIN', 'TRAINEE'), traineeController.getTraineeById);
+// Get a single trainee by ID
+router.get('/:id', auth('ADMIN'), traineeController.getTraineeById);
 
-// // Update a trainee by ID
-// router.patch(
-//   '/:id',
-//   auth('ADMIN', 'TRAINEE'),
-//   validateRequest(updateTraineeZodSchema),
-//   traineeController.updateTrainee,
-// );
+// Update a trainee 
+router.patch(
+  '',
+  auth('TRAINEE'),
+  validateRequest(updateTraineeZodSchema),
+  traineeController.updateTrainee,
+);
 
-// // Delete a trainee by ID
-// router.delete('/:id', auth('ADMIN'), traineeController.deleteTrainee);
+// Delete a trainee by ID
+router.delete('/:id', auth('TRAINEE'), traineeController.deleteTrainee);
 
 export const TraineeRoutes = router;

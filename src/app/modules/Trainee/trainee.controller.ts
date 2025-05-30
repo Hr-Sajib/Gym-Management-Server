@@ -56,29 +56,14 @@ const getTraineeById = catchAsync(async (req: Request, res: Response) => {
 });
 
 const updateTrainee = catchAsync(async (req: Request, res: Response) => {
-  const { id } = req.params;
   const updates = req.body;
-
-  // Get the logged-in user's email and role
-  const loggedInUserEmail = req.user?.userEmail;
+  const loggedInUserEmail = req.user?.email || '';
   const loggedInUserRole = req.user?.role;
 
-  console.log("in cont: ", loggedInUserEmail, loggedInUserRole);
 
   // Restrict to TRAINEE or ADMIN
   if (loggedInUserRole !== 'TRAINEE' && loggedInUserRole !== 'ADMIN') {
     throw new AppError(httpStatus.UNAUTHORIZED, 'Only trainees or admins can update trainee info!');
-  }
-
-  // Fetch the target trainee
-  const targetTrainee = await traineeServices.getTraineeByIdFromDB(id);
-  if (!targetTrainee) {
-    throw new AppError(httpStatus.NOT_FOUND, 'Trainee not found');
-  }
-
-  // Restrict non-admins from updating other users
-  if (loggedInUserRole !== 'ADMIN' && targetTrainee.email !== loggedInUserEmail) {
-    throw new AppError(httpStatus.UNAUTHORIZED, "You can't update another user's information!");
   }
 
   // Prevent role updates
@@ -86,11 +71,11 @@ const updateTrainee = catchAsync(async (req: Request, res: Response) => {
     throw new AppError(httpStatus.BAD_REQUEST, 'Role cannot be updated!');
   }
 
-  const updatedTrainee = await traineeServices.updateTraineeInDB(id, updates);
+  const updatedTrainee = await traineeServices.updateTraineeInDB(loggedInUserEmail, updates);
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
-    message: 'Trainee updated successfully',
+    message: 'Trainee updated successfully by himself',
     data: {
       id: updatedTrainee.id,
       name: updatedTrainee.name,

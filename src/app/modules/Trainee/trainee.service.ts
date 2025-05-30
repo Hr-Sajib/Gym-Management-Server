@@ -2,141 +2,142 @@
 import bcrypt from 'bcrypt';
 import httpStatus from 'http-status';
 import AppError from '../../errors/AppError';
+import mongoose from 'mongoose';
 import { createToken, verifyToken } from '../../utils/auth.utils';
 import config from '../../../config';
 import { ITrainee } from './trainee.interface';
+import Class from '../Class/class.model';
 import Trainee from './trainee.model';
 import Trainer from '../Trainer/trainer.model';
 
-// Define a union type for user to accommodate both Trainee and Trainer shapes
-type UserType = {
-  id: string;
-  name: string;
-  email: string;
-  password: string;
-  phone: string | null;
-  createdAt: Date;
-  updatedAt: Date;
-};
 
 const createTraineeIntoDB = async (payload: ITrainee) => {
-  const hashedPassword = await bcrypt.hash(payload.password, 10);
+  // Validate enrolledClasses if provided
+  if (payload.enrolledClasses && payload.enrolledClasses.length > 0) {
+    const invalidIds = payload.enrolledClasses.filter((id) => !mongoose.Types.ObjectId.isValid(id));
+    if (invalidIds.length > 0) {
+      throw new AppError(httpStatus.BAD_REQUEST, `Invalid Class IDs: ${invalidIds.join(', ')}`);
+    }
+    const classes = await Class.find({ _id: { $in: payload.enrolledClasses } });
+    if (classes.length !== payload.enrolledClasses.length) {
+      const foundIds = classes.map((c) => c._id.toString());
+      const missingIds = payload.enrolledClasses.filter((id) => !foundIds.includes(id.toString()));
+      throw new AppError(httpStatus.NOT_FOUND, `Classes with IDs ${missingIds.join(', ')} not found`);
+    }
+  }
 
+  const hashedPassword = await bcrypt.hash(payload.password, 10);
   const newTrainee = await Trainee.create({
-    name: payload.name,
-    email: payload.email,
+    ...payload,
     password: hashedPassword,
-    phone: payload.phone,
   });
 
   if (!newTrainee) {
     throw new AppError(httpStatus.INTERNAL_SERVER_ERROR, 'Failed to create trainee');
   }
 
-  return {
-    id: newTrainee.id,
-    name: newTrainee.name,
-    email: newTrainee.email,
-    phone: newTrainee.phone,
-    createdAt: newTrainee.createdAt,
-    updatedAt: newTrainee.updatedAt,
-  };
+  return newTrainee.toJSON();
 };
 
 const getAllTraineesFromDB = async () => {
-  const trainees = await Trainee.find(
-    {},
-    { id: 1, name: 1, email: 1, phone: 1, _id: 0 }
-  );
-  return trainees;
+  return await Trainee.find({}).select('id name email phone enrolledClasses').lean();
 };
 
 const getTraineeByIdFromDB = async (id: string) => {
-  const trainee = await Trainee.findOne(
-    { id },
-    { id: 1, name: 1, email: 1, phone: 1, _id: 0 }
-  );
-
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    throw new AppError(httpStatus.BAD_REQUEST, `Invalid Trainee ID: ${id}`);
+  }
+  const trainee = await Trainee.findById(id).select('id name email phone enrolledClasses').lean();
   if (!trainee) {
     throw new AppError(httpStatus.NOT_FOUND, 'Trainee not found');
   }
-
   return trainee;
 };
 
-const updateTraineeInDB = async (id: string, updates: Partial<ITrainee>) => {
-  let hashedPassword: string | undefined = undefined;
-
-  if (updates.password) {
-    const saltRounds = 10;
-    hashedPassword = await bcrypt.hash(updates.password, saltRounds);
-  }
-
-  const updateData: Partial<ITrainee> = {
-    name: updates.name,
-    email: updates.email,
-    phone: updates.phone,
-  };
-
-  if (hashedPassword) {
-    updateData.password = hashedPassword;
-  }
-
-  const updatedTrainee = await Trainee.findOneAndUpdate(
-    { id },
-    { $set: updateData },
-    { new: true, runValidators: true, fields: { id: 1, name: 1, email: 1, phone: 1, password: 1, _id: 0 } }
+const updateTraineeInDB = async (userEmail: string, updates: Partial<ITrainee>) => {
+  // Find trainee by email
+  const trainee = await Trainee.findOne({ email: userEmail }).select(
+    'id name email phone enrolledClasses password role createdAt updatedAt'
   );
+
+  // Check if trainee exists and email matches
+  if (!trainee || trainee.email !== userEmail) {
+    throw new AppError(httpStatus.NOT_FOUND, 'Trainee not found');
+  }
+
+  // Validate enrolledClasses if provided
+  if (updates.enrolledClasses && updates.enrolledClasses.length > 0) {
+    const invalidIds = updates.enrolledClasses.filter((id) => !mongoose.Types.ObjectId.isValid(id));
+    if (invalidIds.length > 0) {
+      throw new AppError(httpStatus.BAD_REQUEST, `Invalid Class IDs: ${invalidIds.join(', ')}`);
+    }
+    const classes = await Class.find({ _id: { $in: updates.enrolledClasses } });
+    if (classes.length !== updates.enrolledClasses.length) {
+      const foundIds = classes.map((c) => c._id.toString());
+      const missingIds = updates.enrolledClasses.filter((id) => !foundIds.includes(id.toString()));
+      throw new AppError(httpStatus.NOT_FOUND, `Classes with IDs ${missingIds.join(', ')} not found`);
+    }
+  }
+
+  let hashedPassword: string | undefined;
+  if (updates.password) {
+    hashedPassword = await bcrypt.hash(updates.password, 10);
+  }
+
+  // Update the trainee
+  const updatedTrainee = await Trainee.findOneAndUpdate(
+    { email: userEmail },
+    {
+      $set: {
+        ...updates,
+        password: hashedPassword || undefined,
+      },
+    },
+    { new: true }
+  ).select('id name email phone enrolledClasses createdAt updatedAt');
 
   if (!updatedTrainee) {
     throw new AppError(httpStatus.NOT_FOUND, 'Trainee not found');
   }
 
-  return updatedTrainee;
+  return updatedTrainee.toJSON();
 };
 
 const deleteTraineeFromDB = async (id: string) => {
-  const result = await Trainee.deleteOne({ id });
-  if (result.deletedCount === 0) {
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    throw new AppError(httpStatus.BAD_REQUEST, `Invalid Trainee ID: ${id}`);
+  }
+  const result = await Trainee.findByIdAndDelete(id);
+  if (!result) {
     throw new AppError(httpStatus.NOT_FOUND, 'Trainee not found');
   }
-  return;
+  return result;
 };
 
-export const loginUserIntoDB = async (payload: { email: string; password: string }) => {
+const loginUserIntoDB = async (payload: { email: string; password: string }) => {
   const { email, password } = payload;
 
   // Query Trainee collection
-  let user: UserType | null = await Trainee.findOne(
-    { email },
-    { id: 1, name: 1, email: 1, password: 1, phone: 1, createdAt: 1, updatedAt: 1, _id: 0 }
-  );
-  let role: 'TRAINEE' | 'TRAINER' = 'TRAINEE';
+  let user = await Trainee.findOne({ email }).select('id name email password phone role createdAt updatedAt');
 
   // If not found, query Trainer collection
   if (!user) {
-    user = await Trainer.findOne(
-      { email },
-      { id: 1, name: 1, email: 1, password: 1, phone: 1, createdAt: 1, updatedAt: 1, _id: 0 }
-    );
-    if (user) {
-      role = 'TRAINER';
-    }
+    user = await Trainer.findOne({ email }).select('id name email password role createdAt updatedAt');
   }
 
   if (!user) {
-    throw new AppError(httpStatus.NOT_FOUND, 'User not found', 'No user found with the provided email');
+    throw new AppError(httpStatus.NOT_FOUND, 'User not found');
   }
 
   const isPasswordValid = await bcrypt.compare(password, user.password);
   if (!isPasswordValid) {
-    throw new AppError(httpStatus.UNAUTHORIZED, 'Unauthorized access', 'Invalid password');
+    throw new AppError(httpStatus.UNAUTHORIZED, 'Invalid password');
   }
 
   const jwtPayload = {
     userEmail: user.email,
     userPhone: user.phone ?? null,
-    role,
+    role: user.role, // Use role from user document
   };
 
   const accessToken = createToken(
@@ -151,56 +152,45 @@ export const loginUserIntoDB = async (payload: { email: string; password: string
     config.jwt_refresh_expires_in as string
   );
 
-  return {
-    accessToken,
-    refreshToken,
-  };
+  return { accessToken, refreshToken };
 };
 
-export const refreshTokenService = async (token: string) => {
+const refreshTokenService = async (token: string) => {
   let decoded;
   try {
     decoded = verifyToken(token, config.jwt_refresh_secret as string) as {
-      userId: string;
       userEmail: string;
       userPhone: string | null;
       role: string;
     };
   } catch (error) {
-    throw new AppError(httpStatus.UNAUTHORIZED, 'Unauthorized access', 'Invalid refresh token');
+    throw new AppError(httpStatus.UNAUTHORIZED, 'Invalid refresh token');
   }
 
   const { userEmail } = decoded;
 
-  // Check if user exists in Trainee collection
-  let user: UserType | null = await Trainee.findOne(
-    { email: userEmail },
-    { id: 1, name: 1, email: 1, password: 1, phone: 1, createdAt: 1, updatedAt: 1, _id: 0 }
+  // Check Trainee collection
+  let user = await Trainee.findOne({ email: userEmail }).select(
+    'id name email password phone role createdAt updatedAt'
   );
-  let role: 'TRAINEE' | 'TRAINER' | 'ADMIN' = 'TRAINEE';
 
-  // If not found, check Trainer collection
+  // If not found, query Trainer collection
   if (!user) {
-    user = await Trainer.findOne(
-      { email: userEmail },
-      { id: 1, name: 1, email: 1, password: 1, phone: 1, createdAt: 1, updatedAt: 1, _id: 0 }
+    user = await Trainer.findOne({ email: userEmail }).select(
+      'id name email password role createdAt updatedAt'
     );
-    role = 'TRAINER';
+   
   }
 
   if (!user) {
-    throw new AppError(httpStatus.NOT_FOUND, 'User not found', 'No user found with the provided email');
-  }
-
-  if (user.email === 'admin@example.com') {
-    role = 'ADMIN';
+    throw new AppError(httpStatus.NOT_FOUND, 'User not found');
   }
 
   const jwtPayload = {
-    userId: user.id,
+    userId: user._id,
     userEmail: user.email,
     userPhone: user.phone ?? null,
-    role,
+    role: user.role, // Use role from user document
   };
 
   const accessToken = createToken(

@@ -40,7 +40,7 @@ const auth = (...requiredRoles: TUserRole[]) => {
       throw new AppError(httpStatus.UNAUTHORIZED, 'Token verification failed');
     }
 
-    // console.log('✅ Decoded Token:', decoded);
+    console.log('✅ Decoded User:', decoded);
 
     const { userEmail } = decoded;
 

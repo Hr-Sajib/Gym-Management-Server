@@ -6,10 +6,6 @@ import { IClass } from './class.interface';
 // Define the Mongoose schema for Class
 const classSchema = new Schema<IClass>(
   {
-    id: {
-      type: String,
-      default: () => new mongoose.Types.ObjectId().toString(),
-    },
     startTime: {
       type: String,
       required: true,
@@ -23,7 +19,8 @@ const classSchema = new Schema<IClass>(
       required: true,
     },
     assignedTrainerId: {
-      type: String,
+      type: Schema.Types.ObjectId, // Changed to ObjectId
+      ref: 'Trainer', // Reference to Trainer _id
       default: null,
     },
     conductedOrNot: {
@@ -31,14 +28,22 @@ const classSchema = new Schema<IClass>(
       default: false,
     },
     enrolledTraineeIds: {
-      type: [String],
+      type: [Schema.Types.ObjectId], // Changed to array of ObjectId
+      ref: 'Trainee', // Reference to Trainee _id
       default: [],
     },
   },
   {
-    timestamps: true, // Automatically manage createdAt and updatedAt fields
+    timestamps: true, // Automatically manage createdAt and updatedAt
+    toJSON: { virtuals: true }, // Include virtuals in JSON output
+    toObject: { virtuals: true }, // Include virtuals in object output
   }
 );
+
+// Virtual field for id (string representation of _id)
+// classSchema.virtual('id').get(function (this: Document) {
+//   return this._id.toString();
+// });
 
 // Create and export the Class model
 const Class = mongoose.model<IClass>('Class', classSchema);

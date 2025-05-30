@@ -11,8 +11,8 @@ const trainerSchema = new Schema<ITrainer>(
     password: { type: String, required: true },
     phone: { type: String, default: null },
     role: { type: String, default: "TRAINER", enum: ["TRAINER"] }, // Enforce "TRAINER" role
-    assignedClasses: { type: [String], default: [] },
-    conductedClasses: { type: [String], default: [] },
+    assignedClasses: { type: [String], ref: 'Class', default: [] }, // Reference to Class id (string)
+    conductedClasses: { type: [String], ref: 'Class', default: [] }, // Reference to Class id (string)
   },
   { timestamps: true }
 );

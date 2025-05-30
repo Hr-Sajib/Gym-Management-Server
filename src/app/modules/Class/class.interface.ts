@@ -1,3 +1,5 @@
+import { Types } from "mongoose";
+
 export interface IClass {
   id?: string;
   startTime: string;
@@ -7,5 +9,5 @@ export interface IClass {
   updatedAt?: Date;
   assignedTrainerId?: string | null;
   conductedOrNot?: boolean;
-  enrolledTraineeIds?: string[]; 
+  enrolledTraineeIds?: Types.ObjectId[]; 
 }

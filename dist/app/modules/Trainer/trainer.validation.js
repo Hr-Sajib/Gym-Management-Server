@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.updateTrainerZodSchema = exports.createTrainerZodSchema = void 0;
-// src/modules/trainer/validations/trainer.validation.ts
+//trainer.validation.ts
 const zod_1 = require("zod");
 exports.createTrainerZodSchema = zod_1.z.object({
     body: zod_1.z.object({
@@ -15,6 +15,7 @@ exports.createTrainerZodSchema = zod_1.z.object({
             required_error: 'Password is required',
         }).min(6, 'Password must be at least 6 characters'),
         phone: zod_1.z.string().optional(),
+        role: zod_1.z.literal("TRAINER"), // Fixed role value as per ITrainer interface
     }),
 });
 exports.updateTrainerZodSchema = zod_1.z.object({
@@ -23,5 +24,6 @@ exports.updateTrainerZodSchema = zod_1.z.object({
         email: zod_1.z.string().email('Invalid email format').optional(),
         password: zod_1.z.string().min(6, 'Password must be at least 6 characters').optional(),
         phone: zod_1.z.string().optional(),
+        // role is omitted from updates since it's fixed and should not be changed
     }),
 });

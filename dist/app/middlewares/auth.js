@@ -50,7 +50,8 @@ const jsonwebtoken_1 = __importStar(require("jsonwebtoken"));
 const config_1 = __importDefault(require("../../config"));
 const catchAsync_1 = __importDefault(require("../utils/catchAsync"));
 const AppError_1 = __importDefault(require("../errors/AppError"));
-const prismaClient_1 = __importDefault(require("../utils/prismaClient"));
+const trainee_model_1 = __importDefault(require("../modules/Trainee/trainee.model"));
+const trainer_model_1 = __importDefault(require("../modules/Trainer/trainer.model"));
 const auth = (...requiredRoles) => {
     return (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
         let token = req.headers.authorization;
@@ -75,30 +76,30 @@ const auth = (...requiredRoles) => {
             }
             throw new AppError_1.default(http_status_1.default.UNAUTHORIZED, 'Token verification failed');
         }
-        // console.log('✅ Decoded Token:', decoded);
+        console.log('✅ Decoded User:', decoded);
         const { userEmail } = decoded;
         let user;
-        let userTable = 'TRAINEE'; // Default
-        // Step 1: Try trainee
-        user = yield prismaClient_1.default.trainee.findUnique({ where: { email: userEmail } });
+        let userRole = 'TRAINEE'; // Default role
+        // Step 1: Try Trainee
+        user = yield trainee_model_1.default.findOne({ email: userEmail }, { id: 1, _id: 0 });
         if (user) {
-            // console.log('👤 User found in TRAINEE table:', user.email);
-            userTable = 'TRAINEE';
+            // console.log('👤 User found in Trainee table:', userEmail);
+            userRole = 'TRAINEE';
         }
         else {
-            // Step 2: Try trainer
-            user = yield prismaClient_1.default.trainer.findUnique({ where: { email: userEmail } });
+            // Step 2: Try Trainer
+            user = yield trainer_model_1.default.findOne({ email: userEmail }, { id: 1, _id: 0 });
             if (user) {
-                // console.log('👤 User found in TRAINER table:', user.email);
-                const normalizedEmail = user.email.trim().toLowerCase();
+                // console.log('👤 User found in Trainer table:', userEmail);
+                const normalizedEmail = userEmail.trim().toLowerCase();
                 // console.log('🔍 Normalized email for comparison:', normalizedEmail);
                 if (normalizedEmail === 'admin@gym.com') {
                     // console.log('🎯 Email matches ADMIN, setting role to ADMIN');
-                    userTable = 'ADMIN';
+                    userRole = 'ADMIN';
                 }
                 else {
                     // console.log('📌 Email does not match ADMIN, setting role to TRAINER');
-                    userTable = 'TRAINER';
+                    userRole = 'TRAINER';
                 }
             }
         }
@@ -106,17 +107,17 @@ const auth = (...requiredRoles) => {
             console.log('❌ No user found in either table.');
             throw new AppError_1.default(http_status_1.default.NOT_FOUND, 'User not found!');
         }
-        // console.log('✅ Final Role:', userTable);
+        // console.log('✅ Final Role:', userRole);
         // Role check based on allowed roles
-        if (requiredRoles.length && !requiredRoles.includes(userTable)) {
-            // console.log('⛔ Role not authorized. Required:', requiredRoles, 'Found:', userTable);
+        if (requiredRoles.length && !requiredRoles.includes(userRole)) {
+            // console.log('⛔ Role not authorized. Required:', requiredRoles, 'Found:', userRole);
             throw new AppError_1.default(http_status_1.default.UNAUTHORIZED, 'Insufficient role permissions');
         }
         // Attach user to request
         req.user = {
             email: userEmail,
             id: user.id,
-            role: userTable,
+            role: userRole,
         };
         console.log('📦 Attached user to req:', req.user);
         next();
