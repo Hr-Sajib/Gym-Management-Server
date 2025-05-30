@@ -174,31 +174,6 @@
 			"name": "Auth",
 			"item": [
 				{
-					"name": "Register User",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "{{adminToken}}",
-								"type": "text",
-								"disabled": true
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"name\": \"Akash\",\n  \"email\": \"akash@gym.com\",\n  \"password\": \"akash@gym\",\n  \"role\": \"TRAINEE\",\n  \"phone\": \"01905899772\"\n}\n",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": "http://localhost:5100/user/register"
-					},
-					"response": []
-				},
-				{
 					"name": "Admin Login",
 					"request": {
 						"method": "POST",
