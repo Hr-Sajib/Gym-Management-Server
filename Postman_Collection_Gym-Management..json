@@ -1,0 +1,520 @@
+{
+	"info": {
+		"_postman_id": "dbefc72c-8efd-4f16-a434-1b7a284e84d1",
+		"name": "Gym-Management",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+		"_exporter_id": "41576727"
+	},
+	"item": [
+		{
+			"name": "Trainer",
+			"item": [
+				{
+					"name": "Update Trainer Ac.",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{adminToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Kabir\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:5100/trainer/68390fef7cec0d6283d20a1b"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Trainer",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{adminToken}}",
+								"type": "text"
+							}
+						],
+						"url": "http://localhost:5100/trainer/68390fef7cec0d6283d20a1b"
+					},
+					"response": []
+				},
+				{
+					"name": "Trainer Creation",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{adminToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Habib\",\n  \"email\": \"habiab@gym.com\",\n  \"password\": \"habib@gym\",\n  \"phone\": \"01905899774\",\n  \"role\":\"TRAINER\"\n}\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:5100/trainer/register"
+					},
+					"response": []
+				},
+				{
+					"name": "Read all Trainers",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{adminToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": "http://localhost:5100/trainer"
+					},
+					"response": []
+				},
+				{
+					"name": "Assign Class",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{adminToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"classId\": \"683951065fbc0fdeed888a74\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:5100/trainer/683910ab3c6c82cbc3b4d5be/assign-class"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Specific Trainer",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{adminToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": "http://localhost:5100/trainer/683910ab3c6c82cbc3b4d5be"
+					},
+					"response": []
+				},
+				{
+					"name": "Create traiiner",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{adminToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Mahim\",\n  \"email\": \"mahim@gym.com\",\n  \"password\": \"mahim@gym\",\n  \"phone\": \"01905899776\",\n  \"assignedClasses\":[\"68391cff868d93790d67d6e0\"],\n  \"conductedClasses\":[\"68391cff868d93790d67d6e0\"]\n}\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:5100/trainer/register"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Admin",
+			"item": []
+		},
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "Register User",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{adminToken}}",
+								"type": "text",
+								"disabled": true
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Akash\",\n  \"email\": \"akash@gym.com\",\n  \"password\": \"akash@gym\",\n  \"role\": \"TRAINEE\",\n  \"phone\": \"01905899772\"\n}\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:5100/user/register"
+					},
+					"response": []
+				},
+				{
+					"name": "Admin Login",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"admin@gym.com\",\n    \"password\": \"admin@gym\"\n  }\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:5100/auth/login"
+					},
+					"response": []
+				},
+				{
+					"name": "Refresh",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": "http://localhost:5100/user/refresh-token"
+					},
+					"response": []
+				},
+				{
+					"name": "Trainee Login",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyRW1haWwiOiJzYWppYkBneW0uY29tIiwidXNlclBob25lIjoiMDE5MDU4OTk3NzEiLCJyb2xlIjoiVFJBSU5FUiIsImlhdCI6MTc0ODUyMDU5MywiZXhwIjoxNzQ4NjA2OTkzfQ.OvD998Zy_dulQWM3Q6paqDrV8pXdE2hfxua3WrBLs6s",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"abir@gym.com\",\n    \"password\": \"abir@gym\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:5100/auth/login"
+					},
+					"response": []
+				},
+				{
+					"name": "Trainer Login",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"kabir@gym.com\",\n    \"password\": \"kabir@gym\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:5100/auth/login"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Trainee",
+			"item": [
+				{
+					"name": "Update Trainee Info",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{traineeToken2}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\":\"Kafi\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:5100/trainee"
+					},
+					"response": []
+				},
+				{
+					"name": "Trainee Register",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{adminToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Kafi\",\n  \"email\": \"kafi@gym.com\",\n  \"password\": \"kafi@gym\",\n  \"phone\": \"01905899772\"\n\n}\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:5100/trainee/register"
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Trainee",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{adminToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Abir\",\n  \"email\": \"abir@gym.com\",\n  \"password\": \"abir@gym\",\n  \"role\": \"TRAINER\",\n  \"phone\": \"01905899772\"\n}\n"
+						},
+						"url": "http://localhost:5100/trainee"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Specific Trainee",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{adminToken}}",
+								"type": "text"
+							}
+						],
+						"url": "http://localhost:5100/trainee/68394e0311daaf717f2456f8"
+					},
+					"response": []
+				},
+				{
+					"name": "Enroll",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{adminToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\"traineeId\" : \"68394e79e5595e28ffff3112\"\n}\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:5100/trainee/enroll-in-class/683951065fbc0fdeed888a74"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Class",
+			"item": [
+				{
+					"name": "Create Class",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{adminToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"startTime\": \"10:00\",\n  \"endTime\": \"12:00\",\n  \"date\": \"2025-08-01T08:00:00.000Z\"\n//   \"assignedTrainerId\": \"683910ab3c6c82cbc3b4d5be\",\n//   \"conductedOrNot\": false\n//   \"enrolledTraineeIds\": [\"68390e8804c872530f2b2ce0\"]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:5100/class/register"
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Classes",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{adminToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"startTime\": \"14:00\",\n  \"endTime\": \"18:00\",\n  \"date\": \"2025-06-01T08:00:00.000Z\"\n//   \"assignedTrainerId\": \"683910ab3c6c82cbc3b4d5be\",\n//   \"conductedOrNot\": false\n//   \"enrolledTraineeIds\": [\"68390e8804c872530f2b2ce0\"]\n}"
+						},
+						"url": "http://localhost:5100/class"
+					},
+					"response": []
+				},
+				{
+					"name": "Get specific class",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{adminToken}}",
+								"type": "text"
+							}
+						],
+						"url": "http://localhost:5100/class/68395486a79b7ad100ea8be0"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Class",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{adminToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"startTime\": \"11:00\",\n        \"endTime\": \"13:00\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:5100/class/68391cff868d93790d67d6e0"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete class",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{adminToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"startTime\": \"11:00\",\n        \"endTime\": \"13:00\"\n}"
+						},
+						"url": "http://localhost:5100/class/68395486a79b7ad100ea8be0"
+					},
+					"response": []
+				},
+				{
+					"name": "Enroll a trainee in class",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{traineeToken1}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"traineeId\":\"68394e79e5595e28ffff3112\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:5100/class/68391eb87141d6bccaf70e84/enroll"
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}

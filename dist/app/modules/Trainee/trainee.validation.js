@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.loginUserZodSchema = exports.updateTraineeZodSchema = exports.refreshTokenZodSchema = exports.createTraineeZodSchema = void 0;
+exports.loginUserZodSchema = exports.unenrollTraineeZodSchema = exports.enrollTraineeZodSchema = exports.updateTraineeZodSchema = exports.refreshTokenZodSchema = exports.createTraineeZodSchema = void 0;
 // src/modules/trainee/validations/trainee.validation.ts
 const zod_1 = require("zod");
 exports.createTraineeZodSchema = zod_1.z.object({
@@ -18,7 +18,6 @@ exports.createTraineeZodSchema = zod_1.z.object({
             required_error: 'Password is required',
         })
             .min(6, 'Password must be at least 6 characters'),
-        role: zod_1.z.literal("TRAINEE"), // Fixed role value as per ITrainee interface
         phone: zod_1.z.string().optional(), // Added phone as optional
     }),
 });
@@ -36,6 +35,21 @@ exports.updateTraineeZodSchema = zod_1.z.object({
         password: zod_1.z.string().min(6, 'Password must be at least 6 characters').optional(),
         phone: zod_1.z.string().optional(), // Added phone as optional
         // role is omitted from updates since it's fixed and should not be changed
+    }),
+});
+// src/modules/trainee/validations/trainee.validation.ts
+exports.enrollTraineeZodSchema = zod_1.z.object({
+    body: zod_1.z.object({
+        traineeId: zod_1.z.string({
+            required_error: 'Trainee ID is required',
+        }),
+    }),
+});
+exports.unenrollTraineeZodSchema = zod_1.z.object({
+    body: zod_1.z.object({
+        traineeId: zod_1.z.string({
+            required_error: 'Trainee ID is required',
+        }),
     }),
 });
 exports.loginUserZodSchema = zod_1.z.object({

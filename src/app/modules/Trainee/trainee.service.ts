@@ -6,10 +6,48 @@ import mongoose from 'mongoose';
 import { createToken, verifyToken } from '../../utils/auth.utils';
 import config from '../../../config';
 import { ITrainee } from './trainee.interface';
+import { IClass } from '../Class/class.interface';
 import Class from '../Class/class.model';
 import Trainee from './trainee.model';
 import Trainer from '../Trainer/trainer.model';
 
+// Helper function to check if a trainee has a conflicting class
+const checkTraineeTimeConflict = async (traineeId: string, classData: IClass): Promise<void> => {
+  const trainee = await Trainee.findById(traineeId).populate({
+    path: 'enrolledClasses',
+    select: 'date startTime endTime',
+  });
+
+  if (!trainee) {
+    throw new AppError(httpStatus.NOT_FOUND, 'Trainee not found');
+  }
+
+  // Ensure enrolledClasses is populated and cast to IClass[]
+  const enrolledClasses = trainee.enrolledClasses as unknown as IClass[];
+  if (!enrolledClasses || enrolledClasses.length === 0) {
+    return; // No conflicts if there are no enrolled classes
+  }
+
+  const newClassStart = new Date(`${classData.date.toISOString().split('T')[0]}T${classData.startTime}:00`);
+  const newClassEnd = new Date(`${classData.date.toISOString().split('T')[0]}T${classData.endTime}:00`);
+
+  for (const enrolledClass of enrolledClasses) {
+    if (enrolledClass.date.toISOString().split('T')[0] !== classData.date.toISOString().split('T')[0]) {
+      continue; // Skip classes on different dates
+    }
+
+    const enrolledStart = new Date(`${enrolledClass.date.toISOString().split('T')[0]}T${enrolledClass.startTime}:00`);
+    const enrolledEnd = new Date(`${enrolledClass.date.toISOString().split('T')[0]}T${enrolledClass.endTime}:00`);
+
+    if (
+      (newClassStart >= enrolledStart && newClassStart < enrolledEnd) ||
+      (newClassEnd > enrolledStart && newClassEnd <= enrolledEnd) ||
+      (newClassStart <= enrolledStart && newClassEnd >= enrolledEnd)
+    ) {
+      throw new AppError(httpStatus.BAD_REQUEST, 'Trainee already has a class scheduled in this time slot');
+    }
+  }
+};
 
 const createTraineeIntoDB = async (payload: ITrainee) => {
   // Validate enrolledClasses if provided
@@ -180,7 +218,6 @@ const refreshTokenService = async (token: string) => {
     user = await Trainer.findOne({ email: userEmail }).select(
       'id name email password role createdAt updatedAt'
     );
-   
   }
 
   if (!user) {
@@ -203,6 +240,140 @@ const refreshTokenService = async (token: string) => {
   return { accessToken };
 };
 
+const enrollTraineeInClass = async (classId: string, traineeId: string) => {
+  console.log(`[enrollTraineeInClass] Enrolling trainee ${traineeId} in class ${classId}`);
+
+  // Validate IDs
+  if (!mongoose.Types.ObjectId.isValid(classId) || !mongoose.Types.ObjectId.isValid(traineeId)) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'Invalid class or trainee ID');
+  }
+
+  // Start a session for the transaction
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    // Check if the class exists
+    const targetClass = await Class.findById(classId)
+      .populate('enrolledTraineeIds', 'name email')
+      .session(session);
+    if (!targetClass) {
+      throw new AppError(httpStatus.NOT_FOUND, 'Class not found');
+    }
+
+    // Check trainee limit
+    if (targetClass.enrolledTraineeIds!.length >= 10) {
+      throw new AppError(httpStatus.BAD_REQUEST, 'Class schedule is full. Maximum 10 trainees allowed per schedule');
+    }
+
+    // Check if the trainee exists
+    const trainee = await Trainee.findById(traineeId).session(session);
+    if (!trainee) {
+      throw new AppError(httpStatus.NOT_FOUND, 'Trainee not found');
+    }
+
+    // Check if the trainee is already enrolled
+    if (targetClass.enrolledTraineeIds!.some((t) => t._id.toString() === traineeId)) {
+      throw new AppError(httpStatus.BAD_REQUEST, 'Trainee is already enrolled in this class');
+    }
+
+    // Check for time conflicts
+    await checkTraineeTimeConflict(traineeId, targetClass);
+
+    // Update the Class to include the trainee
+    targetClass.enrolledTraineeIds!.push(new mongoose.Types.ObjectId(traineeId));
+    const updatedClass = await targetClass.save({ session });
+
+    // Update the Trainee to include the class
+    trainee.enrolledClasses.push(new mongoose.Types.ObjectId(classId));
+    await trainee.save({ session });
+
+    // Commit the transaction
+    await session.commitTransaction();
+    console.log(`[enrollTraineeInClass] Transaction committed: traineeId=${traineeId}, classId=${classId}`);
+
+    // Re-fetch the updated class with populated fields for response
+    const finalClass = await Class.findById(classId)
+      .populate('assignedTrainerId', 'name email')
+      .populate('enrolledTraineeIds', 'name email')
+      .lean();
+
+    return finalClass;
+  } catch (error: any) {
+    // Rollback the transaction on error
+    await session.abortTransaction();
+    console.log(`[enrollTraineeInClass] Transaction rolled back due to error: ${error.message}`);
+    throw error;
+  } finally {
+    session.endSession();
+  }
+};
+
+const unenrollTraineeFromClass = async (classId: string, traineeId: string) => {
+  console.log(`[unenrollTraineeFromClass] Unenrolling trainee ${traineeId} from class ${classId}`);
+
+  // Validate IDs
+  if (!mongoose.Types.ObjectId.isValid(classId) || !mongoose.Types.ObjectId.isValid(traineeId)) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'Invalid class or trainee ID');
+  }
+
+  // Start a session for the transaction
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    // Check if the class exists
+    const targetClass = await Class.findById(classId)
+      .populate('enrolledTraineeIds', 'name email')
+      .session(session);
+    if (!targetClass) {
+      throw new AppError(httpStatus.NOT_FOUND, 'Class not found');
+    }
+
+    // Check if the trainee exists
+    const trainee = await Trainee.findById(traineeId).session(session);
+    if (!trainee) {
+      throw new AppError(httpStatus.NOT_FOUND, 'Trainee not found');
+    }
+
+    // Check if the trainee is enrolled
+    if (!targetClass.enrolledTraineeIds!.some((t) => t._id.toString() === traineeId)) {
+      throw new AppError(httpStatus.BAD_REQUEST, 'Trainee is not enrolled in this class');
+    }
+
+    // Update the Class to remove the trainee
+    targetClass.enrolledTraineeIds = targetClass.enrolledTraineeIds!.filter(
+      (t) => t._id.toString() !== traineeId
+    );
+    const updatedClass = await targetClass.save({ session });
+
+    // Update the Trainee to remove the class
+    trainee.enrolledClasses = trainee.enrolledClasses.filter(
+      (c) => c.toString() !== classId
+    );
+    await trainee.save({ session });
+
+    // Commit the transaction
+    await session.commitTransaction();
+    console.log(`[unenrollTraineeFromClass] Transaction committed: traineeId=${traineeId}, classId=${classId}`);
+
+    // Re-fetch the updated class with populated fields for response
+    const finalClass = await Class.findById(classId)
+      .populate('assignedTrainerId', 'name email')
+      .populate('enrolledTraineeIds', 'name email')
+      .lean();
+
+    return finalClass;
+  } catch (error: any) {
+    // Rollback the transaction on error
+    await session.abortTransaction();
+    console.log(`[unenrollTraineeFromClass] Transaction rolled back due to error: ${error.message}`);
+    throw error;
+  } finally {
+    session.endSession();
+  }
+};
+
 export const traineeServices = {
   createTraineeIntoDB,
   getAllTraineesFromDB,
@@ -211,4 +382,6 @@ export const traineeServices = {
   deleteTraineeFromDB,
   loginUserIntoDB,
   refreshTokenService,
+  enrollTraineeInClass,
+  unenrollTraineeFromClass,
 };

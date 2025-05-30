@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateClassZodSchema = exports.createClassZodSchema = void 0;
+exports.updateClassZodSchema = exports.enrollTraineeZodSchema = exports.createClassZodSchema = void 0;
 // src/modules/class/validations/class.validation.ts
 const zod_1 = require("zod");
 // For creating a class
@@ -17,6 +17,11 @@ exports.createClassZodSchema = zod_1.z.object({
         assignedTrainerId: zod_1.z.string().optional().nullable(), // Removed UUID constraint
         conductedTrainerId: zod_1.z.string().optional().nullable(), // Removed UUID constraint
         enrolledTraineeIds: zod_1.z.array(zod_1.z.string()).optional(), // Added enrolledTraineeIds
+    }),
+});
+exports.enrollTraineeZodSchema = zod_1.z.object({
+    body: zod_1.z.object({
+        traineeId: zod_1.z.string({ required_error: 'Trainee ID is required' }).regex(/^[0-9a-fA-F]{24}$/, 'Invalid Trainee ID format'),
     }),
 });
 // For updating a class

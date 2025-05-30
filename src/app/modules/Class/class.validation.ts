@@ -18,6 +18,11 @@ export const createClassZodSchema = z.object({
   }),
 });
 
+export const enrollTraineeZodSchema = z.object({
+  body: z.object({
+    traineeId: z.string({ required_error: 'Trainee ID is required' }).regex(/^[0-9a-fA-F]{24}$/, 'Invalid Trainee ID format'),
+  }),
+});
 // For updating a class
 export const updateClassZodSchema = z.object({
   body: z.object({

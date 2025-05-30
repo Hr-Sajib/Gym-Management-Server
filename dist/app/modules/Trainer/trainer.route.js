@@ -23,6 +23,6 @@ router.get('/:id', (0, auth_1.default)('ADMIN'), trainer_controller_1.trainerCon
 router.patch('/:id', (0, auth_1.default)('ADMIN'), (0, validateRequest_1.default)(trainer_validation_1.updateTrainerZodSchema), trainer_controller_1.trainerController.updateTrainer);
 //done Delete a trainer by ID
 router.delete('/:id', (0, auth_1.default)('ADMIN'), trainer_controller_1.trainerController.deleteTrainer);
-// ✅ Assign a class to a trainer
+//done Assign a class to a trainer
 router.patch('/:trainerId/assign-class', (0, auth_1.default)('ADMIN'), trainer_controller_1.trainerController.assignClass);
 exports.TrainerRoutes = router;

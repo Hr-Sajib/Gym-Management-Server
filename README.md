@@ -5,52 +5,43 @@
 
 ##live : https://gym-management-system-cx315tio2-hr-saijbs-projects.vercel.app
 
-### 🔐 Auth
 
--   `POST /auth/login` -- Login as a trainee
+- **Trainee Register** - `/trainee/register`
 
--   `POST /auth/refresh-token` -- Get a new access token
+- **Trainee Get All** - `/trainee/`
 
-* * * * *
+- **Trainee Get By ID** - `/trainee/:id`
 
-### 🧍 Trainee
+- **Trainee Update By ID** - `/trainee/:id`
 
--   `POST /trainee/register` -- Register a new trainee
+- **Trainee Delete By ID** - `/trainee/:id`
 
--   `GET /trainee/` -- Get all trainees (**admin only**)
+- **Trainee Enroll in Class** - `/trainee/enroll-in-class/:classId`
 
--   `GET /trainee/:id` -- Get a trainee by ID (**admin only**)
+- **Trainee Cancel Enrollment** - `/trainee/cancel-enroll/:classId`
 
--   `PATCH /trainee/` -- Update logged-in trainee info (**trainee only**)
+- **Trainee Login** - `/trainee/login`
 
--   `DELETE /trainee/:id` -- Delete a trainee (**trainee only**)
+- **Trainee Refresh Token** - `/trainee/refresh-token`
 
-* * * * *
+- **Class Register** - `/class/register`
 
-### 🏋️ Trainer
+- **Class Get All** - `/class/`
 
--   `POST /trainer/register` -- Register a new trainer
+- **Class Get By ID** - `/class/:id`
 
--   `GET /trainer/` -- Get all trainers (**admin only**)
+- **Class Update By ID** - `/class/:id`
 
--   `GET /trainer/:id` -- Get a trainer by ID (**admin or trainer**)
+- **Class Delete By ID** - `/class/:id`
 
--   `PATCH /trainer/:id` -- Update a trainer (**admin only**)
+- **Trainer Register** - `/trainer/register`
 
--   `DELETE /trainer/:id` -- Delete a trainer (**admin only**)
+- **Trainer Get All** - `/trainer/`
 
--   `PATCH /trainer/:trainerId/assign-class` -- Assign a class to trainer (**admin only**)
+- **Trainer Get By ID** - `/trainer/:id`
 
-* * * * *
+- **Trainer Update By ID** - `/trainer/:id`
 
-### 📆 Class
+- **Trainer Delete By ID** - `/trainer/:id`
 
--   `POST /class/register` -- Create a new class (**admin only**)
-
--   `GET /class/` -- Get all classes (**admin only**)
-
--   `GET /class/:id` -- Get a class by ID (**admin or trainer**)
-
--   `PATCH /class/:id` -- Update a class (**admin only**)
-
--   `DELETE /class/:id` -- Delete a class (**admin only**)
+- **Trainer Assign Class** - `/trainer/:trainerId/assign-class`

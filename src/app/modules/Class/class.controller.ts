@@ -5,12 +5,13 @@ import sendResponse from '../../utils/sendResponse';
 import httpStatus from 'http-status';
 import AppError from '../../errors/AppError';
 import { classServices } from './class.service';
+import mongoose from 'mongoose';
 
 const createClass = catchAsync(async (req: Request, res: Response) => {
   const classData = req.body;
 
-  // Restrict to ADMIN or TRAINER
-  if (!['ADMIN'].includes(req.user?.role as string)) {
+  // Restrict to ADMIN
+  if (!['ADMIN'].includes(req.user?.table as string)) {
     throw new AppError(httpStatus.UNAUTHORIZED, 'Only admins can create classes!');
   }
 
@@ -25,7 +26,7 @@ const createClass = catchAsync(async (req: Request, res: Response) => {
 
 const getAllClasses = catchAsync(async (req: Request, res: Response) => {
   // Restrict to ADMIN
-  if (req.user?.role !== 'ADMIN') {
+  if (req.user?.table !== 'ADMIN') {
     throw new AppError(httpStatus.UNAUTHORIZED, 'Only admin can view all classes!');
   }
 
@@ -42,7 +43,7 @@ const getClassById = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
 
   // Restrict to ADMIN or TRAINER
-  if (!['ADMIN', 'TRAINER'].includes(req.user?.role as string)) {
+  if (!['ADMIN', 'TRAINER'].includes(req.user?.table as string)) {
     throw new AppError(httpStatus.UNAUTHORIZED, 'Only admins or trainers can view class details!');
   }
 
@@ -52,8 +53,12 @@ const getClassById = catchAsync(async (req: Request, res: Response) => {
   }
 
   // If the user is a TRAINER, ensure they are assigned to the class
-  if (req.user?.role === 'TRAINER') {
-    if (classData.assignedTrainerId !== req.user.id) {
+  if (req.user?.table === 'TRAINER') {
+    // Ensure assignedTrainerId is populated and compare with userId from JWT
+    const assignedTrainerId = typeof classData.assignedTrainerId === 'object'
+      ? classData.assignedTrainerId!._id.toString()
+      : classData.assignedTrainerId!?.toString();
+    if (assignedTrainerId !== req.user.userId) {
       throw new AppError(httpStatus.UNAUTHORIZED, 'You are not assigned to this class!');
     }
   }
@@ -71,7 +76,7 @@ const updateClass = catchAsync(async (req: Request, res: Response) => {
   const updates = req.body;
 
   // Restrict to ADMIN
-  if (req.user?.role !== 'ADMIN') {
+  if (req.user?.table !== 'ADMIN') {
     throw new AppError(httpStatus.UNAUTHORIZED, 'Only admin can update classes!');
   }
 
@@ -85,15 +90,7 @@ const updateClass = catchAsync(async (req: Request, res: Response) => {
     statusCode: httpStatus.OK,
     success: true,
     message: 'Class updated successfully',
-    data: {
-      id: updatedClass.id,
-      startTime: updatedClass.startTime,
-      endTime: updatedClass.endTime,
-      date: updatedClass.date,
-      assignedTrainerId: updatedClass.assignedTrainerId,
-      conductedOrNot: updatedClass.conductedOrNot, // Replaced conductedTrainerId
-      enrolledTraineeIds: updatedClass.enrolledTraineeIds,
-    },
+    data: updatedClass,
   });
 });
 
@@ -101,7 +98,7 @@ const deleteClass = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
 
   // Restrict to ADMIN
-  if (req.user?.role !== 'ADMIN') {
+  if (req.user?.table !== 'ADMIN') {
     throw new AppError(httpStatus.UNAUTHORIZED, 'Only admin can delete classes!');
   }
 
@@ -119,45 +116,12 @@ const deleteClass = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-const enrollTraineeInClass = catchAsync(async (req: Request, res: Response) => {
-  const { id: classId } = req.params;
-  const { traineeId } = req.body;
 
-  // Restrict to ADMIN or TRAINEE (self-enrollment)
-  if (!['ADMIN', 'TRAINEE'].includes(req.user?.role as string)) {
-    throw new AppError(httpStatus.UNAUTHORIZED, 'Only admins or trainees can enroll in classes!');
-  }
-
-  const targetClass = await classServices.getClassByIdFromDB(classId);
-  if (!targetClass) {
-    throw new AppError(httpStatus.NOT_FOUND, 'Class not found');
-  }
-
-  // If the user is a TRAINEE, ensure they are enrolling themselves
-  if (req.user?.role === 'TRAINEE' && traineeId !== req.user.id) {
-    throw new AppError(httpStatus.UNAUTHORIZED, 'You can only enroll yourself in a class!');
-  }
-
-  const updatedClass = await classServices.enrollTraineeInClass(classId, traineeId);
-  sendResponse(res, {
-    statusCode: httpStatus.OK,
-    success: true,
-    message: 'Trainee enrolled in class successfully',
-    data: {
-      id: updatedClass.id,
-      startTime: updatedClass.startTime,
-      endTime: updatedClass.endTime,
-      date: updatedClass.date,
-      enrolledTraineeIds: updatedClass.enrolledTraineeIds,
-    },
-  });
-});
 
 export const classController = {
   createClass,
   getAllClasses,
   getClassById,
   updateClass,
-  deleteClass,
-  enrollTraineeInClass,
+  deleteClass
 };

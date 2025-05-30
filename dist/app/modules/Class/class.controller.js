@@ -21,8 +21,8 @@ const class_service_1 = require("./class.service");
 const createClass = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     const classData = req.body;
-    // Restrict to ADMIN or TRAINER
-    if (!['ADMIN'].includes((_a = req.user) === null || _a === void 0 ? void 0 : _a.role)) {
+    // Restrict to ADMIN
+    if (!['ADMIN'].includes((_a = req.user) === null || _a === void 0 ? void 0 : _a.table)) {
         throw new AppError_1.default(http_status_1.default.UNAUTHORIZED, 'Only admins can create classes!');
     }
     const newClass = yield class_service_1.classServices.createClassIntoDB(classData);
@@ -36,7 +36,7 @@ const createClass = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, vo
 const getAllClasses = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     // Restrict to ADMIN
-    if (((_a = req.user) === null || _a === void 0 ? void 0 : _a.role) !== 'ADMIN') {
+    if (((_a = req.user) === null || _a === void 0 ? void 0 : _a.table) !== 'ADMIN') {
         throw new AppError_1.default(http_status_1.default.UNAUTHORIZED, 'Only admin can view all classes!');
     }
     const classes = yield class_service_1.classServices.getAllClassesFromDB();
@@ -48,10 +48,10 @@ const getAllClasses = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, 
     });
 }));
 const getClassById = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b;
+    var _a, _b, _c;
     const { id } = req.params;
     // Restrict to ADMIN or TRAINER
-    if (!['ADMIN', 'TRAINER'].includes((_a = req.user) === null || _a === void 0 ? void 0 : _a.role)) {
+    if (!['ADMIN', 'TRAINER'].includes((_a = req.user) === null || _a === void 0 ? void 0 : _a.table)) {
         throw new AppError_1.default(http_status_1.default.UNAUTHORIZED, 'Only admins or trainers can view class details!');
     }
     const classData = yield class_service_1.classServices.getClassByIdFromDB(id);
@@ -59,8 +59,12 @@ const getClassById = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, v
         throw new AppError_1.default(http_status_1.default.NOT_FOUND, 'Class not found');
     }
     // If the user is a TRAINER, ensure they are assigned to the class
-    if (((_b = req.user) === null || _b === void 0 ? void 0 : _b.role) === 'TRAINER') {
-        if (classData.assignedTrainerId !== req.user.id) {
+    if (((_b = req.user) === null || _b === void 0 ? void 0 : _b.table) === 'TRAINER') {
+        // Ensure assignedTrainerId is populated and compare with userId from JWT
+        const assignedTrainerId = typeof classData.assignedTrainerId === 'object'
+            ? classData.assignedTrainerId._id.toString()
+            : (_c = classData.assignedTrainerId) === null || _c === void 0 ? void 0 : _c.toString();
+        if (assignedTrainerId !== req.user.userId) {
             throw new AppError_1.default(http_status_1.default.UNAUTHORIZED, 'You are not assigned to this class!');
         }
     }
@@ -76,7 +80,7 @@ const updateClass = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, vo
     const { id } = req.params;
     const updates = req.body;
     // Restrict to ADMIN
-    if (((_a = req.user) === null || _a === void 0 ? void 0 : _a.role) !== 'ADMIN') {
+    if (((_a = req.user) === null || _a === void 0 ? void 0 : _a.table) !== 'ADMIN') {
         throw new AppError_1.default(http_status_1.default.UNAUTHORIZED, 'Only admin can update classes!');
     }
     const targetClass = yield class_service_1.classServices.getClassByIdFromDB(id);
@@ -88,22 +92,14 @@ const updateClass = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, vo
         statusCode: http_status_1.default.OK,
         success: true,
         message: 'Class updated successfully',
-        data: {
-            id: updatedClass.id,
-            startTime: updatedClass.startTime,
-            endTime: updatedClass.endTime,
-            date: updatedClass.date,
-            assignedTrainerId: updatedClass.assignedTrainerId,
-            conductedOrNot: updatedClass.conductedOrNot, // Replaced conductedTrainerId
-            enrolledTraineeIds: updatedClass.enrolledTraineeIds,
-        },
+        data: updatedClass,
     });
 }));
 const deleteClass = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     const { id } = req.params;
     // Restrict to ADMIN
-    if (((_a = req.user) === null || _a === void 0 ? void 0 : _a.role) !== 'ADMIN') {
+    if (((_a = req.user) === null || _a === void 0 ? void 0 : _a.table) !== 'ADMIN') {
         throw new AppError_1.default(http_status_1.default.UNAUTHORIZED, 'Only admin can delete classes!');
     }
     const targetClass = yield class_service_1.classServices.getClassByIdFromDB(id);
@@ -118,41 +114,10 @@ const deleteClass = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, vo
         data: null,
     });
 }));
-const enrollTraineeInClass = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b;
-    const { id: classId } = req.params;
-    const { traineeId } = req.body;
-    // Restrict to ADMIN or TRAINEE (self-enrollment)
-    if (!['ADMIN', 'TRAINEE'].includes((_a = req.user) === null || _a === void 0 ? void 0 : _a.role)) {
-        throw new AppError_1.default(http_status_1.default.UNAUTHORIZED, 'Only admins or trainees can enroll in classes!');
-    }
-    const targetClass = yield class_service_1.classServices.getClassByIdFromDB(classId);
-    if (!targetClass) {
-        throw new AppError_1.default(http_status_1.default.NOT_FOUND, 'Class not found');
-    }
-    // If the user is a TRAINEE, ensure they are enrolling themselves
-    if (((_b = req.user) === null || _b === void 0 ? void 0 : _b.role) === 'TRAINEE' && traineeId !== req.user.id) {
-        throw new AppError_1.default(http_status_1.default.UNAUTHORIZED, 'You can only enroll yourself in a class!');
-    }
-    const updatedClass = yield class_service_1.classServices.enrollTraineeInClass(classId, traineeId);
-    (0, sendResponse_1.default)(res, {
-        statusCode: http_status_1.default.OK,
-        success: true,
-        message: 'Trainee enrolled in class successfully',
-        data: {
-            id: updatedClass.id,
-            startTime: updatedClass.startTime,
-            endTime: updatedClass.endTime,
-            date: updatedClass.date,
-            enrolledTraineeIds: updatedClass.enrolledTraineeIds,
-        },
-    });
-}));
 exports.classController = {
     createClass,
     getAllClasses,
     getClassById,
     updateClass,
-    deleteClass,
-    enrollTraineeInClass,
+    deleteClass
 };

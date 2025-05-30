@@ -12,11 +12,6 @@ const globalErrorhandler_1 = __importDefault(require("./app/middlewares/globalEr
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const class_route_1 = require("./app/modules/Class/class.route");
 const auth_route_1 = require("./app/modules/Auth/auth.route");
-// import { TraineeRoutes } from './app/modules/Trainee/trainee.route';
-// import cookieParser from "cookie-parser";
-// import globalErrorHandler from './app/middlewares/globalErrorhandler';
-// import { AuthRoutes } from './app/modules/Auth/auth.route';
-// import { TrainerRoutes } from './app/modules/Trainer/trainer.route';
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 app.use((0, cors_1.default)({

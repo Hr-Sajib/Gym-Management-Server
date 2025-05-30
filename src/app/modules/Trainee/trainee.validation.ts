@@ -37,7 +37,22 @@ export const updateTraineeZodSchema = z.object({
     // role is omitted from updates since it's fixed and should not be changed
   }),
 });
+// src/modules/trainee/validations/trainee.validation.ts
+export const enrollTraineeZodSchema = z.object({
+  body: z.object({
+    traineeId: z.string({
+      required_error: 'Trainee ID is required',
+    }),
+  }),
+});
 
+export const unenrollTraineeZodSchema = z.object({
+  body: z.object({
+    traineeId: z.string({
+      required_error: 'Trainee ID is required',
+    }),
+  }),
+});
 export const loginUserZodSchema = z.object({
   body: z.object({
     email: z

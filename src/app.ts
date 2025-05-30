@@ -7,11 +7,7 @@ import globalErrorHandler from './app/middlewares/globalErrorhandler';
 import cookieParser from 'cookie-parser';
 import { classRoutes } from './app/modules/Class/class.route';
 import { AuthRoutes } from './app/modules/Auth/auth.route';
-// import { TraineeRoutes } from './app/modules/Trainee/trainee.route';
-// import cookieParser from "cookie-parser";
-// import globalErrorHandler from './app/middlewares/globalErrorhandler';
-// import { AuthRoutes } from './app/modules/Auth/auth.route';
-// import { TrainerRoutes } from './app/modules/Trainer/trainer.route';
+
 
 dotenv.config();
 const app = express();
