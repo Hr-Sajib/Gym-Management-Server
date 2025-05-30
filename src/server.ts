@@ -1,24 +1,24 @@
-// server.ts
+import mongoose from 'mongoose';
+import dotenv from 'dotenv';
 import app from './app';
-import { PrismaClient } from '@prisma/client';
+
+dotenv.config();
 
 const PORT = process.env.PORT || 5000;
-const prisma = new PrismaClient();
+const DATABASE_URL = process.env.DATABASE_URL || '';
 
-async function startServer() {
+const startServer = async () => {
   try {
-    await prisma.$connect();
-    console.log('✅ Connected to the PostgreSQL database.');
+    await mongoose.connect(DATABASE_URL);
+    console.log('✅ Connected to MongoDB');
 
     app.listen(PORT, () => {
       console.log(`🚀 Server is running on port ${PORT}`);
     });
-
-
   } catch (error) {
-    console.error('❌ Failed to connect to the database:', error);
+    console.error('❌ Failed to connect to MongoDB:', error);
     process.exit(1);
   }
-}
+};
 
 startServer();
