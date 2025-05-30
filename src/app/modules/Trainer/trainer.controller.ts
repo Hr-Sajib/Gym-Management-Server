@@ -15,38 +15,32 @@ const createTrainer = catchAsync(async (req: Request, res: Response) => {
     statusCode: httpStatus.CREATED,
     success: true,
     message: 'Trainer created successfully',
-    data: {
-      id: newTrainer.id,
-      name: newTrainer.name,
-      email: newTrainer.email,
-      createdAt: newTrainer.createdAt,
-      updatedAt: newTrainer.updatedAt,
-    },
+    data: newTrainer,
   });
 });
 
-const assignClass = catchAsync(async (req: Request, res: Response) => {
-  const { trainerId } = req.params;
-  const { classId } = req.body;
+// const assignClass = catchAsync(async (req: Request, res: Response) => {
+//   const { trainerId } = req.params;
+//   const { classId } = req.body;
 
-  if (!classId) {
-    throw new AppError(httpStatus.BAD_REQUEST, 'Class ID is required');
-  }
+//   if (!classId) {
+//     throw new AppError(httpStatus.BAD_REQUEST, 'Class ID is required');
+//   }
 
-  // Only ADMIN can assign classes
-  if (req.user?.role !== 'ADMIN') {
-    throw new AppError(httpStatus.UNAUTHORIZED, 'Only admin can assign classes');
-  }
+//   // Only ADMIN can assign classes
+//   if (req.user?.role !== 'ADMIN') {
+//     throw new AppError(httpStatus.UNAUTHORIZED, 'Only admin can assign classes');
+//   }
 
-  const updatedTrainer = await trainerServices.assignClassToTrainerInDB(trainerId, classId);
+//   const updatedTrainer = await trainerServices.assignClassToTrainerInDB(trainerId, classId);
 
-  sendResponse(res, {
-    statusCode: httpStatus.OK,
-    success: true,
-    message: 'Class assigned to trainer successfully',
-    data: updatedTrainer,
-  });
-});
+//   sendResponse(res, {
+//     statusCode: httpStatus.OK,
+//     success: true,
+//     message: 'Class assigned to trainer successfully',
+//     data: updatedTrainer,
+//   });
+// });
 
 
 const getAllTrainers = catchAsync(async (req: Request, res: Response) => {
@@ -70,8 +64,8 @@ const getTrainerById = catchAsync(async (req: Request, res: Response) => {
   if (!targetTrainer) {
     throw new AppError(httpStatus.NOT_FOUND, 'Trainer not found');
   }
-  if (req.user?.userEmail !== 'admin@gym.com' && targetTrainer.email !== req.user?.userEmail) {
-    throw new AppError(httpStatus.UNAUTHORIZED, "You can't view another user's information!");
+  if (req.user?.email !== 'admin@gym.com') {
+    throw new AppError(httpStatus.UNAUTHORIZED, "Only admin can view any trainere info!");
   }
 
   const trainer = await trainerServices.getTrainerByIdFromDB(id);
@@ -83,6 +77,9 @@ const getTrainerById = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+
+
+
 const updateTrainer = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
   const updates = req.body;
@@ -90,18 +87,11 @@ const updateTrainer = catchAsync(async (req: Request, res: Response) => {
   const loggedInUserEmail = req.user?.userEmail;
   const loggedInUserTable = req.user?.role;
 
-  if (loggedInUserTable !== 'TRAINER' && loggedInUserTable !== 'ADMIN') {
-    throw new AppError(httpStatus.UNAUTHORIZED, 'Only trainers or admins can update trainer info!');
-  }
-
   const targetTrainer = await trainerServices.getTrainerByIdFromDB(id);
   if (!targetTrainer) {
     throw new AppError(httpStatus.NOT_FOUND, 'Trainer not found');
   }
 
-  if (loggedInUserTable !== 'ADMIN' && targetTrainer.email !== loggedInUserEmail) {
-    throw new AppError(httpStatus.UNAUTHORIZED, "You can't update another user's information!");
-  }
 
   const updatedTrainer = await trainerServices.updateTrainerInDB(id, updates);
   sendResponse(res, {
@@ -134,6 +124,46 @@ const deleteTrainer = catchAsync(async (req: Request, res: Response) => {
     success: true,
     message: 'Trainer deleted successfully',
     data: null,
+  });
+});
+
+
+const assignClass = catchAsync(async (req: Request, res: Response) => {
+  const { trainerId } = req.params;
+  const { classId } = req.body;
+
+  console.log(`[assignClass] Assigning class ${classId} to trainer ${trainerId}`);
+
+  // Validate classId presence
+  if (!classId) {
+    console.log('[assignClass] Class ID not provided in request body');
+    throw new AppError(httpStatus.BAD_REQUEST, 'Class ID is required');
+  }
+
+  // Perform the assignment
+  const { updatedTrainer, updatedClass } = await trainerServices.assignClassToTrainer(trainerId, classId);
+
+  console.log(`[assignClass] Successfully assigned class ${classId} to trainer ${trainerId}`);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Class assigned to trainer successfully',
+    data: {
+      trainer: {
+        id: updatedTrainer._id,
+        name: updatedTrainer.name,
+        email: updatedTrainer.email,
+        assignedClasses: updatedTrainer.assignedClasses,
+      },
+      class: {
+        id: updatedClass._id,
+        startTime: updatedClass.startTime,
+        endTime: updatedClass.endTime,
+        date: updatedClass.date,
+        assignedTrainerId: updatedClass.assignedTrainerId,
+      },
+    },
   });
 });
 

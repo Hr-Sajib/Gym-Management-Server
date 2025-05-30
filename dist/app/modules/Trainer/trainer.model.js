@@ -37,7 +37,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
 // Define the Mongoose schema for Trainer
 const trainerSchema = new mongoose_1.Schema({
-    id: { type: String, default: () => new mongoose_1.default.Types.ObjectId().toString() },
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
