@@ -195,8 +195,14 @@
 					"name": "Refresh",
 					"request": {
 						"method": "POST",
-						"header": [],
-						"url": "http://localhost:5100/user/refresh-token"
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{adminToken}}",
+								"type": "text"
+							}
+						],
+						"url": "http://localhost:5100/auth/refresh-token"
 					},
 					"response": []
 				},
@@ -368,7 +374,7 @@
 						"header": [
 							{
 								"key": "Authorization",
-								"value": "{{adminToken}}",
+								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyRW1haWwiOiJhZG1pbkBneW0uY29tIiwidXNlclBob25lIjpudWxsLCJyb2xlIjoiQURNSU4iLCJpYXQiOjE3NDg2MjAyNzYsImV4cCI6MTc0ODcwNjY3Nn0.MyIr0AO7hvESamEMFxYknOVZRbcwIgvpx_RniVIb8WI",
 								"type": "text"
 							}
 						],
