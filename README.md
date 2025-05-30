@@ -3,7 +3,7 @@
 ## Gym-Management-Server (not finished yet, working)
 
 
-##live : gym-management-system-tawny-phi.vercel.app
+##live : [gym-management-system-tawny-phi.vercel.app](https://gym-management-system-tawny-phi.vercel.app/)
 
 
 ## PostMan collection given up there ^
