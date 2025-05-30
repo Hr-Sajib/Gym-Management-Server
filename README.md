@@ -3,7 +3,8 @@
 ## Gym-Management-Server (not finished yet, working)
 
 
-##live : https://gym-management-system-cx315tio2-hr-saijbs-projects.vercel.app
+##live : gym-management-system-tawny-phi.vercel.app
+
 
 
 ## Having a postman access issue in deployed link
