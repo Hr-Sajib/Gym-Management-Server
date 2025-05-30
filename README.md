@@ -6,8 +6,6 @@
 ##live : gym-management-system-tawny-phi.vercel.app
 
 
-
-## Having a postman access issue in deployed link
 ## PostMan collection given up there ^
 
 
