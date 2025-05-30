@@ -22,7 +22,7 @@ exports.createTrainerZodSchema = zod_1.z.object({
         phone: zod_1.z.string().optional().nullable(),
         role: zod_1.z.literal('TRAINER', {
             errorMap: () => ({ message: 'Role must be "TRAINER"' }),
-        }),
+        }).optional(),
         assignedClasses: zod_1.z.array(objectIdString).optional().default([]),
         conductedClasses: zod_1.z.array(objectIdString).optional().default([]),
     }),
