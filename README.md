@@ -5,7 +5,9 @@
 
 ##live : https://gym-management-system-cx315tio2-hr-saijbs-projects.vercel.app
 
-##Having a postman access issue in deployed link
+
+## Having a postman access issue in deployed link
+## PostMan collection given up there ^
 
 
 - **Trainee Register** - `/trainee/register`
