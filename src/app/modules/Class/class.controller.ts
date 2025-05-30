@@ -11,7 +11,7 @@ const createClass = catchAsync(async (req: Request, res: Response) => {
   const classData = req.body;
 
   // Restrict to ADMIN
-  if (!['ADMIN'].includes(req.user?.table as string)) {
+  if (req.user.role !== "ADMIN"){
     throw new AppError(httpStatus.UNAUTHORIZED, 'Only admins can create classes!');
   }
 
@@ -26,7 +26,7 @@ const createClass = catchAsync(async (req: Request, res: Response) => {
 
 const getAllClasses = catchAsync(async (req: Request, res: Response) => {
   // Restrict to ADMIN
-  if (req.user?.table !== 'ADMIN') {
+  if (req.user.role !== "ADMIN"){
     throw new AppError(httpStatus.UNAUTHORIZED, 'Only admin can view all classes!');
   }
 
@@ -42,8 +42,9 @@ const getAllClasses = catchAsync(async (req: Request, res: Response) => {
 const getClassById = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
 
+  console.log("Role in get class by id : ",req.user.role)
   // Restrict to ADMIN or TRAINER
-  if (!['ADMIN', 'TRAINER'].includes(req.user?.table as string)) {
+  if (req.user.role !== "ADMIN" || req.user.role == "TRAINEE" ){
     throw new AppError(httpStatus.UNAUTHORIZED, 'Only admins or trainers can view class details!');
   }
 
@@ -76,7 +77,7 @@ const updateClass = catchAsync(async (req: Request, res: Response) => {
   const updates = req.body;
 
   // Restrict to ADMIN
-  if (req.user?.table !== 'ADMIN') {
+  if (req.user.role !== "ADMIN"){
     throw new AppError(httpStatus.UNAUTHORIZED, 'Only admin can update classes!');
   }
 
@@ -98,7 +99,7 @@ const deleteClass = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
 
   // Restrict to ADMIN
-  if (req.user?.table !== 'ADMIN') {
+  if (req.user.role !== "ADMIN"){
     throw new AppError(httpStatus.UNAUTHORIZED, 'Only admin can delete classes!');
   }
 

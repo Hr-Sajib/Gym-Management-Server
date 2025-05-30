@@ -153,14 +153,14 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"name\": \"Mahim\",\n  \"email\": \"mahim@gym.com\",\n  \"password\": \"mahim@gym\",\n  \"phone\": \"01905899776\",\n  \"assignedClasses\":[\"68391cff868d93790d67d6e0\"],\n  \"conductedClasses\":[\"68391cff868d93790d67d6e0\"]\n}\n",
+							"raw": "{\n  \"name\": \"akkas\",\n  \"email\": \"akkas@gym.com\",\n  \"password\": \"akkas@gym\",\n  \"phone\": \"01905899779\"\n}\n",
 							"options": {
 								"raw": {
 									"language": "json"
 								}
 							}
 						},
-						"url": "http://localhost:5100/trainer/register"
+						"url": "https://gym-management-system-tawny-phi.vercel.app/trainer/register"
 					},
 					"response": []
 				}
@@ -487,30 +487,6 @@
 							"raw": "{\n    \"startTime\": \"11:00\",\n        \"endTime\": \"13:00\"\n}"
 						},
 						"url": "http://localhost:5100/class/68395486a79b7ad100ea8be0"
-					},
-					"response": []
-				},
-				{
-					"name": "Enroll a trainee in class",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "{{traineeToken1}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"traineeId\":\"68394e79e5595e28ffff3112\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": "http://localhost:5100/class/68391eb87141d6bccaf70e84/enroll"
 					},
 					"response": []
 				}

@@ -19,10 +19,9 @@ const http_status_1 = __importDefault(require("http-status"));
 const AppError_1 = __importDefault(require("../../errors/AppError"));
 const class_service_1 = require("./class.service");
 const createClass = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
     const classData = req.body;
     // Restrict to ADMIN
-    if (!['ADMIN'].includes((_a = req.user) === null || _a === void 0 ? void 0 : _a.table)) {
+    if (req.user.role !== "ADMIN") {
         throw new AppError_1.default(http_status_1.default.UNAUTHORIZED, 'Only admins can create classes!');
     }
     const newClass = yield class_service_1.classServices.createClassIntoDB(classData);
@@ -34,9 +33,8 @@ const createClass = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, vo
     });
 }));
 const getAllClasses = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
     // Restrict to ADMIN
-    if (((_a = req.user) === null || _a === void 0 ? void 0 : _a.table) !== 'ADMIN') {
+    if (req.user.role !== "ADMIN") {
         throw new AppError_1.default(http_status_1.default.UNAUTHORIZED, 'Only admin can view all classes!');
     }
     const classes = yield class_service_1.classServices.getAllClassesFromDB();
@@ -48,10 +46,11 @@ const getAllClasses = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, 
     });
 }));
 const getClassById = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c;
+    var _a, _b;
     const { id } = req.params;
+    console.log("Role in get class by id : ", req.user.role);
     // Restrict to ADMIN or TRAINER
-    if (!['ADMIN', 'TRAINER'].includes((_a = req.user) === null || _a === void 0 ? void 0 : _a.table)) {
+    if (req.user.role !== "ADMIN" || req.user.role == "TRAINEE") {
         throw new AppError_1.default(http_status_1.default.UNAUTHORIZED, 'Only admins or trainers can view class details!');
     }
     const classData = yield class_service_1.classServices.getClassByIdFromDB(id);
@@ -59,11 +58,11 @@ const getClassById = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, v
         throw new AppError_1.default(http_status_1.default.NOT_FOUND, 'Class not found');
     }
     // If the user is a TRAINER, ensure they are assigned to the class
-    if (((_b = req.user) === null || _b === void 0 ? void 0 : _b.table) === 'TRAINER') {
+    if (((_a = req.user) === null || _a === void 0 ? void 0 : _a.table) === 'TRAINER') {
         // Ensure assignedTrainerId is populated and compare with userId from JWT
         const assignedTrainerId = typeof classData.assignedTrainerId === 'object'
             ? classData.assignedTrainerId._id.toString()
-            : (_c = classData.assignedTrainerId) === null || _c === void 0 ? void 0 : _c.toString();
+            : (_b = classData.assignedTrainerId) === null || _b === void 0 ? void 0 : _b.toString();
         if (assignedTrainerId !== req.user.userId) {
             throw new AppError_1.default(http_status_1.default.UNAUTHORIZED, 'You are not assigned to this class!');
         }
@@ -76,11 +75,10 @@ const getClassById = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, v
     });
 }));
 const updateClass = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
     const { id } = req.params;
     const updates = req.body;
     // Restrict to ADMIN
-    if (((_a = req.user) === null || _a === void 0 ? void 0 : _a.table) !== 'ADMIN') {
+    if (req.user.role !== "ADMIN") {
         throw new AppError_1.default(http_status_1.default.UNAUTHORIZED, 'Only admin can update classes!');
     }
     const targetClass = yield class_service_1.classServices.getClassByIdFromDB(id);
@@ -96,10 +94,9 @@ const updateClass = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, vo
     });
 }));
 const deleteClass = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
     const { id } = req.params;
     // Restrict to ADMIN
-    if (((_a = req.user) === null || _a === void 0 ? void 0 : _a.table) !== 'ADMIN') {
+    if (req.user.role !== "ADMIN") {
         throw new AppError_1.default(http_status_1.default.UNAUTHORIZED, 'Only admin can delete classes!');
     }
     const targetClass = yield class_service_1.classServices.getClassByIdFromDB(id);
