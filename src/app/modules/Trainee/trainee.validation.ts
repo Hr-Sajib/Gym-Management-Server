@@ -16,7 +16,6 @@ export const createTraineeZodSchema = z.object({
         required_error: 'Password is required',
       })
       .min(6, 'Password must be at least 6 characters'),
-    role: z.literal("TRAINEE"), // Fixed role value as per ITrainee interface
     phone: z.string().optional(), // Added phone as optional
   }),
 });

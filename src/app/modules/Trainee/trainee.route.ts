@@ -11,20 +11,20 @@ import auth from '../../middlewares/auth';
 
 const router = express.Router();
 
-// Create/register a new trainee
+//done register a new trainee
 router.post(
   '/register',
   validateRequest(createTraineeZodSchema),
   traineeController.createTrainee,
 );
 
-// Get all trainees
+//done Get all trainees
 router.get('/', auth('ADMIN'), traineeController.getAllTrainees);
 
-// Get a single trainee by ID
+//done Get a single trainee by ID
 router.get('/:id', auth('ADMIN'), traineeController.getTraineeById);
 
-// Update a trainee 
+//done Update a trainee 
 router.patch(
   '',
   auth('TRAINEE'),

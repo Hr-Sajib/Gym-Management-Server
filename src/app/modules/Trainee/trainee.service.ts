@@ -30,6 +30,7 @@ const createTraineeIntoDB = async (payload: ITrainee) => {
   const newTrainee = await Trainee.create({
     ...payload,
     password: hashedPassword,
+    role: "TRAINEE"
   });
 
   if (!newTrainee) {
